@@ -22,7 +22,9 @@ link/ether a1:b2:c3:d4:e5:f6 brd ff:ff:ff:ff:ff:ff
 
 ---
 
-## Configure System Time
+## Configure System Settings
+
+### Time
 
 Check that 
 ```
@@ -33,3 +35,10 @@ outputs the correct date and time. If not, the run the following commands and ch
 sudo timedatectl set-ntp true
 sudo systemctl restart systemd-timesyncd
 ```
+
+### Interfaces
+Enable I2C.
+```
+sudo raspi-config
+```
+Under `Interfaces`-> `I2C` -> `OK` to enable I2C. 
