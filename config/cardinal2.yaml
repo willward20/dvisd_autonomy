@@ -3,14 +3,13 @@
 control:
 
   # servokit signal frequency
-  frequency: 50
+  freq_hz: 100
 
   # pulse width range
-  steering_pw_min: 1000
-  steering_pw_max: 2000
-  throttle_pw_min: 750
-  throttle_pw_max: 2250
+  esc_neutral_us: 1580
+  esc_forward_us: 1650
 
-  # neutral steering and throttle
-  neutral_angle: 90
-  neutral_fraction: 0.53
+  # steering angles
+  neutral_angle: 100
+  steering_min: 50
+  steering_max: 140

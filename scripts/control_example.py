@@ -16,27 +16,36 @@ def main(config_path):
 
     # ------ WRITE YOUR CODE HERE -------
 
-    # Turn left
-    print("Turning")
-    control.turn(120)
-    time.sleep(2)
-
-    # Moving straight
-    print("Moving straight")
-    control.turn(90)
+    # small forward
+    print("small forward")
     control.forward()
-    time.sleep(2)
+    time.sleep(2.0)
+
+    control.turn(100)
+    time.sleep(0.5)
+
+    control.turn(80)
+    time.sleep(0.25)
+    control.turn(120)
+    time.sleep(0.25)
+    control.turn(80)
+    time.sleep(0.25)
+    control.turn(120)
+    time.sleep(0.25)
+
+    control.turn(100)
+    time.sleep(0.5)
 
     # -----------------------------------
 
 
     # Always reset to neutral
     print("Reseting motors to neutral...")
-    control.stop()
+    control.shutdown()
 
 
 if __name__ == "__main__":
 
-    config_path = Path.home() / "dvisd_autonomy/config/cardinal2.yaml"
+    config_path = Path.home() / "dvisd_autonomy/config/cardinal1.yaml"
 
     main(str(config_path))
