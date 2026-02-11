@@ -13,7 +13,7 @@ class Control:
 
     def __init__(
             self, 
-            frequency: int, 
+            freq_hz: int, 
             steering_pw_min: int, 
             steering_pw_max: int, 
             throttle_pw_min: int, 
@@ -26,7 +26,7 @@ class Control:
 
         # Configure the ServoKit interface.
         self.kit = ServoKit(channels=16)
-        self.kit.frequency = frequency
+        self.kit.freq_hz = freq_hz
         self.kit.servo[THROTTLE_CH].set_pulse_width_range(throttle_pw_min, throttle_pw_max)
         self.kit.servo[STEER_CH0].set_pulse_width_range(steering_pw_min, steering_pw_max)
         self.kit.servo[STEER_CH1].set_pulse_width_range(steering_pw_min, steering_pw_max)

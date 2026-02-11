@@ -1,0 +1,15 @@
+# Configuration for Cardinal 1
+
+control:
+
+  # servokit signal frequency
+  freq_hz: 100
+
+  # pulse width range
+  esc_neutral_us: 1580
+  esc_forward_us: 1650
+
+  # steering angles
+  neutral_angle: 100
+  steering_min: 50
+  steering_max: 140
