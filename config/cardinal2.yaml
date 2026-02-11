@@ -1,0 +1,16 @@
+# Configuration for Cardinal 2
+
+control:
+
+  # servokit signal frequency
+  frequency: 50
+
+  # pulse width range
+  steering_pw_min: 1000
+  steering_pw_max: 2000
+  throttle_pw_min: 750
+  throttle_pw_max: 2250
+
+  # neutral steering and throttle
+  neutral_angle: 90
+  neutral_fraction: 0.53

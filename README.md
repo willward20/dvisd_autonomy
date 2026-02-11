@@ -14,4 +14,11 @@ source myvenv/bin/activate
 ```
 pip3 install adafruit-circuitpython-servokit
 pip3 install RPi.GPIO
+pip3 install PyYAML
+```
+
+## Usage
+```
+cd /path/to/dvisd_autonomy
+python3 -m scripts.control_example
 ```
