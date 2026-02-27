@@ -7,7 +7,7 @@ control:
 
   # pulse width range
   esc_neutral_us: 1580
-  esc_forward_us: 1650
+  esc_forward_us: 1637
 
   # steering angles
   neutral_angle: 100

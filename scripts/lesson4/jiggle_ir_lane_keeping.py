@@ -1,3 +1,8 @@
+"""
+Run command:
+    python3 -m scripts.lesson4.jiggle_ir_lane_keeping
+"""
+
 from dvisd_autonomy.control import Control
 from dvisd_autonomy.utils import load_yaml
 from pathlib import Path
@@ -18,10 +23,12 @@ def main(config_path):
 
     BLACK_STATE = 1
 
-    FORWARD_SPEED = 1650   # <<< adjust speed here
+    FORWARD_SPEED = 1637
+    STOP_SPEED = 1620
     LEFT_TURN = 80
     RIGHT_TURN = 120
-    TURN_DELAY = 0.05
+    STRAIGHT = 100          # neutral steering
+    TURN_DELAY = 1
 
     print("Starting tape following...")
     control.forward(FORWARD_SPEED)
@@ -30,16 +37,24 @@ def main(config_path):
         while True:
 
             state = GPIO.input(IR_PIN)
+            color = "BLACK" if state == BLACK_STATE else "WHITE"
+            print("IR State:", color, state)
 
             if state == BLACK_STATE:
                 control.turn(LEFT_TURN)
-                time.sleep(TURN_DELAY)
                 control.forward(FORWARD_SPEED)
-
+                print("left")
             else:
                 control.turn(RIGHT_TURN)
-                time.sleep(TURN_DELAY)
                 control.forward(FORWARD_SPEED)
+                print("right")
+
+            time.sleep(TURN_DELAY)
+            control.stop()
+
+            # control.forward(STOP_SPEED)
+            # time.sleep(TURN_DELAY)
+            # control.stop()
 
     finally:
         GPIO.cleanup()
