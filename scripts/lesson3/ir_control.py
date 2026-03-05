@@ -1,8 +1,10 @@
-from dvisd_autonomy.control import Control
-from dvisd_autonomy.utils import load_yaml
+from dvisd_autonomy.control.control import Control
+from dvisd_autonomy.control.utils import load_yaml
 from pathlib import Path
 import time
-import RPi.GPIO as GPIO
+from dvisd_autonomy.sensors.ir import IR
+
+"""Drive forward until a black line is detected by an IR sensor."""
 
 def main(config_path):
     
@@ -13,12 +15,8 @@ def main(config_path):
     print("Initializing motors...")
     control = Control(**config["control"])
 
-
-    # ------ WRITE YOUR CODE HERE -------
-    IR_PIN = 21
-
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(IR_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    # Create IR sensor object
+    ir_sensor = IR(21) 
 
     BLACK_STATE = 1         
     N_CONSEC = 3            
@@ -27,29 +25,21 @@ def main(config_path):
     control.forward(1650)
 
     count = 0
-    try:
-        while True:
-            state = GPIO.input(IR_PIN)
-            print(state)
+    while True:
+        state = ir_sensor.get_ir_state()
+        print(state)
 
-            if state == BLACK_STATE:
-                count += 1
-            else:
-                count = 0
+        if state == BLACK_STATE:
+            count += 1
+        else:
+            count = 0
 
-            if count >= N_CONSEC:
-                print("Black line detected. Stopping.")
-                control.stop()
-                break
+        if count >= N_CONSEC:
+            print("Black line detected. Stopping.")
+            control.stop()
+            break
 
-            time.sleep(0.02)
-
-    finally:
-        GPIO.cleanup()
-    # -----------------------------------
-    # Always reset to neutral
-    print("Reseting motors to neutral...")
-    control.shutdown()
+        time.sleep(0.02)
 
 
 if __name__ == "__main__":
