@@ -1,6 +1,5 @@
 import RPi.GPIO as GPIO
 
-
 class IR: 
     """Sensor interface for infrared (IR)"""
 
