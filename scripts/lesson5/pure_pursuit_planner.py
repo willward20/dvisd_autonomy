@@ -1,6 +1,5 @@
-from dvisd_autonomy.pure_pursuit_planning.navigator import AutonomousNavigator
-
-# --- EXECUTION BLOCK ---
+from dvisd_autonomy.pure_pursuit.navigator import AutonomousNavigator
+from dvisd_autonomy.control.control import Control
 
 # 1. Define your path: A simple 2-meter square
 square_waypoints = [
@@ -23,7 +22,7 @@ rc_hardware = Control(
 
 # 3. Start the navigator
 nav = AutonomousNavigator(
-    hw,
+    rc_hardware,
     square_waypoints,
     wheelbase=0.2,
     lookahead=0.4,

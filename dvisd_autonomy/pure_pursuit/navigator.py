@@ -1,6 +1,8 @@
 import math
 import time
 import numpy as np
+from dvisd_autonomy.pure_pursuit.dead_reckoner import DeadReckoner
+from dvisd_autonomy.pure_pursuit.pure_pursuit import PurePursuitController
 
 class AutonomousNavigator:
     def __init__(self, control_api, waypoints, wheelbase=0.25, lookahead=0.5, resolution=0.1):
@@ -79,7 +81,7 @@ class AutonomousNavigator:
         finally:
             self.car.shutdown()
 
-# --- Usage Example ---
+"""--- Usage Example ---
 
 square_waypoints = [[0,0], [2,0], [2,2], [0,2], [0,0]]
 
@@ -91,3 +93,4 @@ nav = AutonomousNavigator(hw, square_waypoints, wheelbase=0.2, lookahead=0.4, re
 
 # Start driving!
 nav.run(target_pulse_us=1580)
+"""
