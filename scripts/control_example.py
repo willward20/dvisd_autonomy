@@ -13,39 +13,38 @@ def main(config_path):
     print("Initializing motors...")
     control = Control(**config["control"])
 
+    try:
+        # ------ WRITE YOUR CODE HERE -------
 
-    # ------ WRITE YOUR CODE HERE -------
+        # small forward
+        print("small forward")
+        control.forward()
+        time.sleep(2.0)
 
-    # small forward
-    print("small forward")
-    control.forward()
-    time.sleep(2.0)
+        control.turn(100)
+        time.sleep(0.5)
 
-    control.turn(100)
-    time.sleep(0.5)
+        control.turn(80)
+        time.sleep(0.25)
+        control.turn(120)
+        time.sleep(0.25)
+        control.turn(80)
+        time.sleep(0.25)
+        control.turn(120)
+        time.sleep(0.25)
 
-    control.turn(80)
-    time.sleep(0.25)
-    control.turn(120)
-    time.sleep(0.25)
-    control.turn(80)
-    time.sleep(0.25)
-    control.turn(120)
-    time.sleep(0.25)
+        control.turn(100)
+        time.sleep(0.5)
 
-    control.turn(100)
-    time.sleep(0.5)
+        # -----------------------------------
 
-    # -----------------------------------
-
-
-    # Always reset to neutral
-    print("Reseting motors to neutral...")
-    control.shutdown()
+    finally:
+        # Always reset to neutral
+        print("Resetting motors to neutral...")
+        control.shutdown()
 
 
 if __name__ == "__main__":
 
     config_path = Path.home() / "dvisd_autonomy/config/cardinal1.yaml"
-
     main(str(config_path))
