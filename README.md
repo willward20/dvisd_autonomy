@@ -19,6 +19,9 @@ pip3 install RPi.GPIO
 pip3 install PyYAML
 ```
 
+## Electronic Wiring
+Each subfolder in `dvisd_autonomy` (e.g., `dvisd_autonomy/control`) provides a diagram for wiring electronic devices. Refer to these when building the cars.
+
 ## Driving the Cars
 1. Open `~/dvisd_autonomy/scripts/control_example` and change the config file to the current vehicle.
 2. Connect battery to ESC.
@@ -32,7 +35,7 @@ python3 -m scripts.control_example
 
 ## Interfaces
 ### Control Commands
-`dvisd_autonomy/control.py` provides an API enabling open-loop vehicle control.
+`dvisd_autonomy/control/control.py` provides an API enabling open-loop vehicle control.
 
 | Method                    | Description                                                                 |
 |---------------------------|-----------------------------------------------------------------------------|
@@ -41,4 +44,3 @@ python3 -m scripts.control_example
 | `straight()`              | Resets steering angle to center. Does not change throttle value.          |
 | `stop()`                  | Resets throttle to neutral. Does not change steering angle.               |
 | `shutdown()`              | Safely stops and deinitializes hardware.                                  |
- 
