@@ -1,6 +1,8 @@
 from dvisd_autonomy.pure_pursuit.navigator import AutonomousNavigator
 from dvisd_autonomy.control.control import Control
 
+"""python -m scripts.lesson5.pure_pursuit_planner"""
+
 ### Tune the parameters yourself ###
 esc_neutral_us = 1580
 esc_forward_us = 1650
@@ -13,9 +15,9 @@ METERS_PER_SEC_PER_US = 0.01
 # 1. Define your path: A simple 2-meter square
 square_waypoints = [
     [0.0, 0.0],
-    [2.0, 0.0],
-    [2.0, 2.0],
-    [0.0, 2.0],
+    [1.5, 0.0],
+    [1.5, 1.5],
+    [0.0, 1.5],
     [0.0, 0.0]
 ]
 
