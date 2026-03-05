@@ -13,35 +13,25 @@ def main(config_path):
     print("Initializing motors...")
     control = Control(**config["control"])
 
-    try:
-        # ------ WRITE YOUR CODE HERE -------
+    # small forward
+    print("small forward")
+    control.forward()
+    time.sleep(2.0)
 
-        # small forward
-        print("small forward")
-        control.forward()
-        time.sleep(2.0)
+    control.turn(100)
+    time.sleep(0.5)
 
-        control.turn(100)
-        time.sleep(0.5)
+    control.turn(80)
+    time.sleep(0.25)
+    control.turn(120)
+    time.sleep(0.25)
+    control.turn(80)
+    time.sleep(0.25)
+    control.turn(120)
+    time.sleep(0.25)
 
-        control.turn(80)
-        time.sleep(0.25)
-        control.turn(120)
-        time.sleep(0.25)
-        control.turn(80)
-        time.sleep(0.25)
-        control.turn(120)
-        time.sleep(0.25)
-
-        control.turn(100)
-        time.sleep(0.5)
-
-        # -----------------------------------
-
-    finally:
-        # Always reset to neutral
-        print("Resetting motors to neutral...")
-        control.shutdown()
+    control.turn(100)
+    time.sleep(0.5)
 
 
 if __name__ == "__main__":

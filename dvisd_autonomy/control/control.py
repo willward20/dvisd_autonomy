@@ -4,15 +4,12 @@ from board import SCL, SDA
 from adafruit_pca9685 import PCA9685
 from adafruit_motor import servo
 
-
 STEER_CH0 = 0
 STEER_CH1 = 1
 THROTTLE_CH = 2
 
-
 class Control:
-
-    """ Control interface for RC car using PCA9685. """
+    """Control interface for RC car using PCA9685."""
 
     def __init__(
         self,
@@ -23,8 +20,7 @@ class Control:
         steering_min: int,
         steering_max: int,
     ):
-
-        """ Initialize the control interface and set motors to neutral. """
+        """Initialize the control interface and set motors to neutral."""
 
         # Store config
         self.esc_neutral_us = esc_neutral_us
@@ -48,60 +44,43 @@ class Control:
         self.stop()
         self.straight()
         time.sleep(5)
-
+    
+    def __del__(self):
+        """Shuts down the motors on cleanup."""
+        print("Resetting motors to neutral...")
+        self.shutdown()
 
     def _us_to_counts(self, pulse_us: int) -> int:
-
-        """ Convert microsecond pulse width to PCA9685 counts. """
-
+        """Convert microsecond pulse width to PCA9685 counts."""
         pulse_us = max(500, min(2500, pulse_us))
         return int(round(pulse_us * 4096 / self.period_us))
 
-
     def _set_pulse_us(self, pulse_us: int):
-
-        """ Set a microsecond pulse on the throttle channel. """
-
+        """Set a microsecond pulse on the throttle channel."""
         counts = self._us_to_counts(pulse_us)
         self.pca.channels[THROTTLE_CH].duty_cycle = int(counts * 65535 / 4095)
 
-
     def turn(self, angle: int):
-
-        """ Set the steering angle (clamped). """
-
+        """Set the steering angle (clamped)."""
         clamped = min(self.steering_max, max(self.steering_min, angle))
         self.steering.angle = clamped
 
-
     def forward(self, pulse_us: int | None = None):
-
-        """ Set the forward throttle fraction. """
-
+        """Set the forward throttle fraction."""
         if pulse_us is None:
             pulse_us = self.esc_forward_us
-
         self._set_pulse_us(pulse_us)
 
-
     def straight(self):
-
-        """ Reset steering angle to center. """
-
+        """Reset steering angle to center."""
         self.turn(self.neutral_angle)
 
-
     def stop(self):
-
-        """ Reset throttle to neutral. """
-
+        """Reset throttle to neutral."""
         self._set_pulse_us(self.esc_neutral_us)
 
-
     def shutdown(self):
-
-        """ Safely stop and deinitialize hardware. """
-
+        """Safely stop and deinitialize hardware."""
         self.stop()
         self.straight()
         time.sleep(1)
