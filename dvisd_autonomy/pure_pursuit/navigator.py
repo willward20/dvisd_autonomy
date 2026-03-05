@@ -5,11 +5,12 @@ from dvisd_autonomy.pure_pursuit.dead_reckoner import DeadReckoner
 from dvisd_autonomy.pure_pursuit.pure_pursuit import PurePursuitController
 
 class AutonomousNavigator:
-    def __init__(self, control_api, waypoints, wheelbase=0.25, lookahead=0.5, resolution=0.1):
+    def __init__(self, control_api, waypoints, wheelbase=0.25, lookahead=0.5, resolution=0.1, esc_neutral_us=1580, METERS_PER_SEC_PER_US=0.01):
         """
         :param control_api: Instance of your Control class
         :param waypoints: List of [x, y] coordinates
         :param resolution: Max distance between points in meters
+        :param esc_neutral_us: Neutral throttle pulse width
         """
         self.car = control_api
         self.wheelbase = wheelbase
@@ -23,8 +24,8 @@ class AutonomousNavigator:
         self.pp = PurePursuitController(self.car, wheelbase, lookahead)
         
         # 3. Calibration (Assumed linear mapping)
-        self.MIN_THROTTLE_PULSE = 1500
-        self.METERS_PER_SEC_PER_US = 0.01 
+        self.MIN_THROTTLE_PULSE = esc_neutral_us
+        self.METERS_PER_SEC_PER_US = METERS_PER_SEC_PER_US # this is also an estimation
 
     def _upsample_path(self, path, max_dist):
         """Internal helper to fill gaps between sparse waypoints."""
@@ -47,6 +48,7 @@ class AutonomousNavigator:
     def run(self, target_pulse_us, arrival_threshold=0.15):
         """
         Main loop. 
+        :param target_pulse_us: Throttle pulse width to maintain during navigation.
         :param arrival_threshold: Stop if within X meters of the final point.
         """
         print(f"Navigation started. Path contains {len(self.path)} points.")
