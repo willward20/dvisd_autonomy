@@ -19,7 +19,7 @@ def main(config_path):
 
     GPIO.setmode(GPIO.BCM)
 
-    FORWARD_SPEED = 1637
+    FORWARD_SPEED = 1650
     STOP_SPEED = 1620
     STRAIGHT = 100          # neutral steering
     DELAY = 1

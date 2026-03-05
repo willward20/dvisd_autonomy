@@ -23,7 +23,8 @@ def main(config_path):
 
     BLACK_STATE = 1
 
-    FORWARD_SPEED = 1637
+    # FORWARD_SPEED = 1640
+    FORWARD_SPEED = 1640
     STOP_SPEED = 1620
     LEFT_TURN = 80
     RIGHT_TURN = 120
