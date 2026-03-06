@@ -18,6 +18,9 @@ class LIDAR:
 					print(f"LIDAR busy. Restarting... ({retry}):", e)
 					self.kill_lidar()
 					retry += 1
+				elif "could not open port /dev/ttyUSB0" in e.args[0]:
+					print(f"ERROR: Could not open port /dev/ttyUSB0. Please make sure the lidar is plugged in.")
+					exit(1)
 				else:
 					raise e
 		if retry == 10:
@@ -27,7 +30,7 @@ class LIDAR:
 
 
 	def kill_lidar(self):
-		if self.lidar:
+		if hasattr(self, "lidar") and self.lidar is not None:
 			self.lidar.stop()
 			self.lidar.disconnect()
 
@@ -38,7 +41,6 @@ class LIDAR:
 		for scan in self.lidar.iter_scans():
 			min_angle, max_angle = np.inf, -np.inf
 			scan_data = np.zeros(360)
-			print("scan len", len(scan))
 			for (_, angle, distance_mm) in scan:
 				# get angle in degrees
 				scan_angle = min(359, int(angle % 360))
@@ -62,8 +64,7 @@ if __name__ == "__main__":
 	lidar = LIDAR()
 	i = 0
 	for data in lidar.get_data():
-		# print(f"{i}: {data}")
 		i += 1
-		print()
+		print(data)
 		if i == 3:
 			exit()
