@@ -5,7 +5,8 @@ from dvisd_autonomy.pure_pursuit.dead_reckoner import DeadReckoner
 from dvisd_autonomy.pure_pursuit.pure_pursuit import PurePursuitController
 
 class AutonomousNavigator:
-    def __init__(self, control_api, waypoints, wheelbase=0.25, lookahead=0.5, resolution=0.1, esc_neutral_us=1580, METERS_PER_SEC_PER_US=0.01):
+    def __init__(self, control_api, waypoints, wheelbase=0.25, lookahead=0.5, resolution=0.1, esc_neutral_us=1580, 
+            METERS_PER_SEC_PER_US=0.00001):
         """
         :param control_api: Instance of your Control class
         :param waypoints: List of [x, y] coordinates
@@ -18,6 +19,7 @@ class AutonomousNavigator:
         
         # 1. Automatically upsample the path on initialization
         self.path = self._upsample_path(np.array(waypoints), resolution)
+        print("Path:", self.path)
         
         # 2. Initialize Sub-modules
         self.dr = DeadReckoner(x=0.0, y=0.0, yaw=0.0, wheelbase=wheelbase)
@@ -73,10 +75,9 @@ class AutonomousNavigator:
                 self.car.forward(target_pulse_us)
 
                 # Heartbeat log
-                if int(time.time() * 10) % 10 == 0:
-                    print(f"Pos: ({x:.2f}, {y:.2f}) | Goal Dist: {dist_to_goal:.2f}m")
+                print(f"Estimated pos: ({x:.2f}, {y:.2f}) | Goal Dist: {dist_to_goal:.2f}m")
 
-                time.sleep(0.05)
+                time.sleep(0.005)
 
         except KeyboardInterrupt:
             print("\nManual override. Shutting down...")
