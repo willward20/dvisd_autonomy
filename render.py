@@ -7,7 +7,7 @@ import numpy as np
 import time
 import matplotlib.pyplot as plt
 
-def points_to_plane(points, wall_height=2):
+def points_to_plane(points, wall_height=1):
     point1 = points[0]
     point2 = points[1]
     lower1 = [point1[0], point1[1], 0]
@@ -24,7 +24,7 @@ def extend_points(point1, point2, max_render_distance=5):
     direction = point2 - point1
     norm_dir = np.linalg.norm(direction)
     if norm_dir == 0:
-        raise ValueError("Points must not be the same")
+        return point1, point2
 
     direction /= norm_dir  # normalize
 
@@ -66,7 +66,7 @@ class CarVisualizer:
         # Create PyVista plotter
         self.plotter = pv.Plotter()
         self.plotter.set_background("white")
-        self.plotter.show_grid()
+        # self.plotter.show_grid()
 
         # --- Add ground ---
         self._render_ground()
@@ -76,18 +76,23 @@ class CarVisualizer:
         self.car_actor = self.plotter.add_mesh(self.car_mesh, color="blue")
 
         # --- Add empty point cloud ---
-        self.pc_mesh = self._create_pc_mesh()
-        self.pc_actor = self.plotter.add_points(self.pc_mesh, color="red", point_size=5)
+        self.pc_mesh_red = self._create_pc_mesh()
+        self.pc_actor_red = self.plotter.add_points(self.pc_mesh_red, color="red", point_size=5)
+        self.pc_mesh_blue = self._create_pc_mesh()
+        self.pc_actor_blue = self.plotter.add_points(self.pc_mesh_blue, color="blue", point_size=5)
+        self.pc_mesh_green = self._create_pc_mesh()
+        self.pc_actor_green = self.plotter.add_points(self.pc_mesh_green, color="green", point_size=5)
+        self.hidden_points = np.tile(np.array([[0.0, 0.0, 0.0]]), (360, 1))
 
         # ---  Add guiding lines mesh ---
-        self.gl_meshes = [self._create_line_mesh() for _ in range(6)]
-        self.gl_actors = [self.plotter.add_mesh(mesh, color="green", line_width=3) for mesh in self.gl_meshes]
+        self.gl_meshes = [self._create_line_mesh() for _ in range(20)]
+        self.gl_actors = [self.plotter.add_mesh(mesh, color="grey", line_width=3) for mesh in self.gl_meshes]
 
         # --- Add estimated walls mesh ---
         self.wall_mesh1 = self._create_wall_mesh()
-        self.wall_actor1 = self.plotter.add_mesh(self.wall_mesh1, color="orange", opacity=0.5)
+        self.wall_actor1 = self.plotter.add_mesh(self.wall_mesh1, color="blue", opacity=0.5)
         self.wall_mesh2 = self._create_wall_mesh()
-        self.wall_actor2 = self.plotter.add_mesh(self.wall_mesh2, color="orange", opacity=0.5)
+        self.wall_actor2 = self.plotter.add_mesh(self.wall_mesh2, color="green", opacity=0.5)
 
         # Set camera
         self.plotter.camera_position = [( -6, 0, 3), (0,0,0), (0,0,3)]
@@ -156,7 +161,16 @@ class CarVisualizer:
 
 
     # ------------------ Update functions ------------------ #
-    def update_pointcloud(self, points):
+    def clear_old_points(self, color):
+        if color == "red":
+            self.pc_mesh_red.points = self.hidden_points
+        elif color == "blue":
+            self.pc_mesh_blue.points = self.hidden_points
+        elif color == "green":
+            self.pc_mesh_green.points = self.hidden_points
+
+
+    def update_pointcloud(self, points, color):
         assert type(points) == np.ndarray, "Points must be a numpy array"
         assert points.ndim == 2
         """Update LIDAR point cloud"""
@@ -172,18 +186,41 @@ class CarVisualizer:
         # mirror along y (side to side dimension)
         points_3d[:, 1] *= -1
 
-        self.pc_mesh.points = points_3d
+        # the number of points in points_3d varies, so we need to extend it with hidden points
+        new_points = self.hidden_points.copy()
+        new_points[:points_3d.shape[0]] = points_3d
+
+        # Update points
+        if color == "red":
+            self.pc_mesh_red.points = new_points
+        elif color == "blue":
+            self.pc_mesh_blue.points = new_points
+        elif color == "green":
+            self.pc_mesh_green.points = new_points
+
+
+
 
     def update_guiding_lines(self, endpoints):
         assert type(endpoints) == np.ndarray, "Endpoints must be a numpy array"
         assert endpoints.ndim == 2, "Endpoints must be Nx2 array"
-        assert endpoints.shape[0] == 6, "There must be exactly 6 endpoints for the guiding lines"
+        assert endpoints.shape[0] < len(self.gl_meshes)
         assert endpoints.shape[1] == 2, "Endpoints must be 2D (x,y)"
 
+        # mirror along y (side to side dimension)
+        endpoints[..., 1] *= -1
+
         """Update guiding lines"""
-        for i in range(min(len(endpoints), len(self.gl_meshes))):
+        # update seen lines
+        for i in range(endpoints.shape[0]):
             start = [0, 0, self.base_height]
             end = [endpoints[i][0], endpoints[i][1], self.base_height]
+            self.gl_meshes[i].points = np.array([start, end])
+
+        # hide unused lines by making them have zero length.
+        for i in range(endpoints.shape[0], len(self.gl_meshes)):
+            start = [0, 0, 0]
+            end = [0,0,0]
             self.gl_meshes[i].points = np.array([start, end])
 
     def update_estimated_walls(self, walls):
@@ -193,6 +230,9 @@ class CarVisualizer:
         assert walls.shape[0] == 2, "There must be exactly 2 walls"
         assert walls.shape[1] == 2, "Each wall must have 2 endpoints"
         assert walls.shape[2] == 2, "Endpoints must be 2D (x,y)"
+        # mirror along y (side to side dimension)
+        walls[..., 1] *= -1
+
         # Do first wall
         wall1 = walls[0]
         point1 = wall1[0]
@@ -209,14 +249,41 @@ class CarVisualizer:
         points = points_to_plane([point1, point2])
         self.wall_mesh2.points = points
 
-    def update(self, raw_pointcloud_data, guiding_line_endpoints, estimated_walls):
+    def update(
+            self,
+            points_red=None,
+            points_blue=None,
+            points_green=None,
+            endpoints=None,
+            walls=None,
+    ):
         """Convenience method to update both"""
-        if raw_pointcloud_data is not None:
-            self.update_pointcloud(raw_pointcloud_data)
-        if guiding_line_endpoints is not None:
-            self.update_guiding_lines(guiding_line_endpoints)
-        if estimated_walls is not None:
-            self.update_estimated_walls(estimated_walls)
+
+        if points_red is not None:
+            self.update_pointcloud(points_red, "red")
+        else:
+            self.clear_old_points("red")
+
+
+        if points_blue is not None:
+            self.update_pointcloud(points_blue, "blue")
+        else:
+            self.clear_old_points("blue")
+
+
+        if points_green is not None:
+            self.update_pointcloud(points_green, "green")
+        else:
+            self.clear_old_points("green")
+
+
+        if endpoints is not None:
+            self.update_guiding_lines(endpoints)
+
+
+        if walls is not None:
+            self.update_estimated_walls(walls)
+
         self.plotter.update()
 
 
@@ -238,24 +305,9 @@ if __name__ == "__main__":
         except zmq.error.Again:
             msg = {}
 
-        points = msg.get("points", None)
-        endpoints = msg.get("endpoints", None)
-        walls = msg.get("walls", None)
-
         # Update visualization
-        viz.update(points, endpoints, walls)
-
-        # if points is not None:
-        #     plt.clf()
-        #     plt.scatter(points[:, 0], points[:, 1], color="red")
-        #     plt.scatter([0],[0], color="blue", s=5)
-        #     plt.xlim(-5, 5)
-        #     plt.ylim(-5,5)
-        #     plt.show(block=False)
-        #     plt.pause(0.05)
-
-
-        # remove from normal loop
+        if len(msg) > 0:
+            viz.update(**msg)
         time.sleep(0.03)
 
 
