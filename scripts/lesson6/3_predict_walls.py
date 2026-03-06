@@ -13,37 +13,49 @@ from tqdm import tqdm
 
 
 def line_of_best_fit(points):
-	# pull out x and y
-	x = points[:, 0]
-	y = points[:, 1]
 
 	# Remove points close to 0,0
 	margin_of_error = 0.05 # 5 cm
-	zero_points = (np.abs(x) < margin_of_error) & (np.abs(y) < margin_of_error)
-	x = x[~zero_points] # remember ~ means "NOT"
-	y = y[~zero_points]
+	zero_points = (np.abs(points[:, 0]) < margin_of_error) & (np.abs(points[:, 1]) < margin_of_error)
+	points = points[~zero_points]
 
-	if len(x) > 1:
-
-		# fit y = mx + b
-		m, b = np.polyfit(y, x, 1)
-
-		# Find two points along the line
-		y1, y2 = y.min(), y.max()
-		x1 = m * y1 + b
-		x2 = m * y2 + b
-
-		# return two points along the wall. 
-		p1 = [x1, y1]
-		p2 = [x2, y2]
-		return np.array([p1, p2])
-	else:
+	if points.shape[0] <= 1:
 		return np.array([[0.0, 0.0], [0.0, 0.0]])
+
+	# Removes points that are far from the middle of the data
+	# This is necesarry because the lidar is noisy, and sometimes 
+	# it hallucinates points that are not there.
+	# our line of best fit is very sensitive to this noise
+	median = np.median(points, axis=0) # compute middle points
+	dists = np.linalg.norm(points - median, axis=1) # compute distances
+	keep = dists < np.percentile(dists, 80) # remove points that are in the 80th percentile of distance or higher
+	points = points[keep]
+
+	if points.shape[0] <= 1:
+		return np.array([[0.0, 0.0], [0.0, 0.0]])
+
+	#  pull out x and y
+	x = points[:, 0]
+	y = points[:, 1]
+
+	# fit y = mx + b
+	m, b = np.polyfit(y, x, 1)
+
+	# Find two points along the line
+	y1, y2 = y.min(), y.max()
+	x1 = m * y1 + b
+	x2 = m * y2 + b
+
+	# return two points along the wall. 
+	p1 = [x1, y1]
+	p2 = [x2, y2]
+	return np.array([p1, p2])
+
 
 
 if __name__ == "__main__":
 	# How wide of a range of points do you want to use to predict the wall?
-	angle = 45 # degrees
+	angle = 25 # degrees
 
 	# Connect to lidar
 	lidar = LIDAR()
