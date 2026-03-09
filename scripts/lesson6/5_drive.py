@@ -112,6 +112,14 @@ def line_of_best_fit(points):
 if __name__ == "__main__":
 	# How wide of a range of points do you want to use to predict the wall?
 	angle = 25 # degrees
+	### Tune the parameters yourself ###
+	esc_neutral_us = 1580
+	esc_forward_us = 1650
+	wheelbase = 0.4
+	lookahead = 0.1
+	resolution = 0.001
+	METERS_PER_SEC_PER_US = 0.015
+	####################################
 
 	# Connect to lidar
 	lidar = LIDAR()
@@ -119,6 +127,16 @@ if __name__ == "__main__":
 	# Create server to send data to laptop
 	# TCP is the communication protocol that most of the internet uses. 
 	tcp_socket = TcpSocket()
+
+	# 2. Initialize your specific hardware config
+	rc_hardware = Control(
+		freq_hz=100,
+		esc_neutral_us=esc_neutral_us,
+		esc_forward_us=esc_forward_us, 
+		neutral_angle=100,
+		steering_min=50,
+		steering_max=140
+	)
 
 	# fetch data in a loop
 	# Press CTRL+C to stop the program
@@ -191,7 +209,17 @@ if __name__ == "__main__":
 		path[1] = waypoint # end at the waypoint
 
 
-		# TODO drive
+		# 3. Start the navigator
+		nav = AutonomousNavigator(
+			rc_hardware,
+			path,
+			wheelbase=wheelbase,
+			lookahead=lookahead,
+			resolution=resolution,
+			esc_neutral_us=esc_neutral_us,
+			METERS_PER_SEC_PER_US=METERS_PER_SEC_PER_US
+		)
+		nav.run(target_pulse_us=esc_forward_us)
 
 		# send to renderer, using different colors for each wall
 		tcp_socket.send({
