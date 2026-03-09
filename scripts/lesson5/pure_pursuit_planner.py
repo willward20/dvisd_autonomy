@@ -1,3 +1,5 @@
+"""python -m scripts.lesson5.pure_pursuit_planner"""
+
 from dvisd_autonomy.pure_pursuit.navigator import AutonomousNavigator
 from dvisd_autonomy.control.control import Control
 import time
@@ -86,14 +88,14 @@ esc_forward_us = 1650
 wheelbase = 0.4
 lookahead = 0.1
 resolution = 0.001
-METERS_PER_SEC_PER_US = 0.015
+meters_per_sec_per_us = 0.006
 ####################################
 
 # 1. Define a simple arc, with a run-up to get to a good speed
 arc_waypoints = generate_arc_from_origin(radius=2.0, sweep_deg=180, num_points=3)
-arc_waypoints = add_run_up(arc_waypoints, run_up_length=5.0)
+arc_waypoints = add_run_up(arc_waypoints, run_up_length=2.0)
 
-arc_waypoints = generate_lane_change(num_changes = 1, length_scale = 1)
+arc_waypoints = generate_lane_change(run_up_length=2, num_changes = 1, length_scale = 1)
 
 print("WAYPOINTS = ", arc_waypoints)
 
@@ -115,6 +117,6 @@ nav = AutonomousNavigator(
     lookahead=lookahead,
     resolution=resolution,
     esc_neutral_us=esc_neutral_us,
-    METERS_PER_SEC_PER_US=METERS_PER_SEC_PER_US
+    meters_per_sec_per_us=meters_per_sec_per_us
 )
 nav.run(target_pulse_us=esc_forward_us)

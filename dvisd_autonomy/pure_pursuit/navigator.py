@@ -6,7 +6,7 @@ from dvisd_autonomy.pure_pursuit.pure_pursuit import PurePursuitController
 
 class AutonomousNavigator:
     def __init__(self, control_api, waypoints, wheelbase=0.25, lookahead=0.5, resolution=0.1, esc_neutral_us=1580, 
-            METERS_PER_SEC_PER_US=0.00001):
+            meters_per_sec_per_us=0.006):
         """
         :param control_api: Instance of your Control class
         :param waypoints: List of [x, y] coordinates
@@ -27,7 +27,7 @@ class AutonomousNavigator:
         
         # 3. Calibration (Assumed linear mapping)
         self.MIN_THROTTLE_PULSE = esc_neutral_us
-        self.METERS_PER_SEC_PER_US = METERS_PER_SEC_PER_US # this is also an estimation
+        self.METERS_PER_SEC_PER_US = meters_per_sec_per_us # this is also an estimation
 
     def _upsample_path(self, path, max_dist):
         """Internal helper to fill gaps between sparse waypoints."""
