@@ -1,4 +1,7 @@
-"""python -m scripts.lesson5.pure_pursuit_planner"""
+"""
+source ~/myvenv/bin/activate
+python -m scripts.lesson5.pure_pursuit_planner
+"""
 
 from dvisd_autonomy.pure_pursuit.navigator import AutonomousNavigator
 from dvisd_autonomy.control.control import Control
