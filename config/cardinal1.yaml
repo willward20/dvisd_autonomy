@@ -13,3 +13,9 @@ control:
   neutral_angle: 100
   steering_min: 50
   steering_max: 140
+
+  # pure pursuit
+  wheelbase: 0.4
+  lookahead: 0.1
+  resolution: 0.001
+  meters_per_sec_per_us: 0.006

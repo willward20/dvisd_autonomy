@@ -87,11 +87,11 @@ def add_run_up(path, run_up_length = 1.0):
 
 ### Tune the parameters yourself ###
 esc_neutral_us = 1580
-esc_forward_us = 1650
-wheelbase = 0.4
+esc_forward_us = 1645
+wheelbase = 0.3
 lookahead = 0.1
 resolution = 0.001
-meters_per_sec_per_us = 0.006
+meters_per_sec_per_us = 0.02
 ####################################
 
 # 1. Define a simple arc, with a run-up to get to a good speed
