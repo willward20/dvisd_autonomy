@@ -3,7 +3,12 @@ from dvisd_autonomy.render.TcpSocket import TcpSocket
 import numpy as np
 from tqdm import tqdm
 
+from dvisd_autonomy.pure_pursuit.navigator import AutonomousNavigator
+from dvisd_autonomy.control.control import Control
+import time
+import numpy as np
 
+import time
 #######################################################
 # Part 4: Find a waypoint!
 # In the previous script, we found the walls, defined as a line in XY space. 
@@ -140,6 +145,8 @@ if __name__ == "__main__":
 
 	# fetch data in a loop
 	# Press CTRL+C to stop the program
+	wait_time = 5.0 # seconds
+	start_time = time.time()
 	for distances in tqdm(lidar.get_data(), desc="Fetching LIDAR data"):
 		# Convert data to x,y coordinates. 
 		angles = np.array([i for i in range(360)])
@@ -209,18 +216,6 @@ if __name__ == "__main__":
 		path[1] = waypoint # end at the waypoint
 
 
-		# 3. Start the navigator
-		nav = AutonomousNavigator(
-			rc_hardware,
-			path,
-			wheelbase=wheelbase,
-			lookahead=lookahead,
-			resolution=resolution,
-			esc_neutral_us=esc_neutral_us,
-			METERS_PER_SEC_PER_US=METERS_PER_SEC_PER_US
-		)
-		nav.run(target_pulse_us=esc_forward_us)
-
 		# send to renderer, using different colors for each wall
 		tcp_socket.send({
 			"points_red": other_points,
@@ -232,3 +227,16 @@ if __name__ == "__main__":
 			"path": path,
 		})
 		
+		current_time = time.time()
+		if current_time - start_time > wait_time:
+			# 3. Start the navigator
+			nav = AutonomousNavigator(
+				rc_hardware,
+				path,
+				wheelbase=wheelbase,
+				lookahead=lookahead,
+				resolution=resolution,
+				esc_neutral_us=esc_neutral_us,
+				meters_per_sec_per_us=METERS_PER_SEC_PER_US
+			)
+			nav.run(target_pulse_us=esc_forward_us)
