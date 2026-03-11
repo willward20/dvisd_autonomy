@@ -146,97 +146,103 @@ if __name__ == "__main__":
 	# fetch data in a loop
 	# Press CTRL+C to stop the program
 	wait_time = 5.0 # seconds
+	kill_time = 10.0 # seconds
 	start_time = time.time()
-	for distances in tqdm(lidar.get_data(), desc="Fetching LIDAR data"):
-		# Convert data to x,y coordinates. 
-		angles = np.array([i for i in range(360)])
-		radians = np.radians(angles)
-		xs = distances * np.cos(radians)
-		ys = distances * np.sin(radians)
-		points = np.stack([xs,ys], axis=1)
+	try:
+		for distances in tqdm(lidar.get_data(), desc="Fetching LIDAR data"):
+			# Convert data to x,y coordinates. 
+			angles = np.array([i for i in range(360)])
+			radians = np.radians(angles)
+			xs = distances * np.cos(radians)
+			ys = distances * np.sin(radians)
+			points = np.stack([xs,ys], axis=1)
 
-		# Compute points that we assume belong to the left wall.
-		# Remember 0 degrees is forward. 90 degrees is perfectly to the left.
-		# Therefore, we assume 90 degrees plus or minus "angle" must belong to the wall
-		front_left_angle = 90 - angle
-		back_left_angle = 90 + angle
-		belongs_to_left_wall = (angles > front_left_angle) & (angles < back_left_angle)
+			# Compute points that we assume belong to the left wall.
+			# Remember 0 degrees is forward. 90 degrees is perfectly to the left.
+			# Therefore, we assume 90 degrees plus or minus "angle" must belong to the wall
+			front_left_angle = 90 - angle
+			back_left_angle = 90 + angle
+			belongs_to_left_wall = (angles > front_left_angle) & (angles < back_left_angle)
 
-		# do the same thing for the right wall
-		# right = 270 degrees
-		front_right_angle = 270 + angle
-		back_right_angle = 270 - angle
-		belongs_to_right_wall = (angles > back_right_angle) & (angles < front_right_angle)
+			# do the same thing for the right wall
+			# right = 270 degrees
+			front_right_angle = 270 + angle
+			back_right_angle = 270 - angle
+			belongs_to_right_wall = (angles > back_right_angle) & (angles < front_right_angle)
 
-		# now create points that belong to each list
-		# This assigns the point to left_wall_points if it belongs to the left wall, otherwise assigns it to 0.0
-		left_wall_points = points[belongs_to_left_wall]
-		
-		# do the same thing for the right wall
-		right_wall_points = points[belongs_to_right_wall]
-		
-		# now gather any points that do not belong to either wall.
-		# Thats what this means: ~(belongs_to_left_wall | belongs_to_right_wall)
-		# ~ means "NOT", and | means "OR"
-		# so you can read this as:
-		# NOT belongs to left wall OR belongs to right wall
-		other_points = points[~(belongs_to_left_wall | belongs_to_right_wall)]
-
-
-		# We will also draw lines from the car (origin) at the specified angle,
-		# so that its easier to see whats happening
-		# Feel free to change the "angle" variable to get an idea of whats happening. 
-		front_left_endpoint = [np.cos(np.radians(front_left_angle)), np.sin(np.radians(front_left_angle))]
-		back_left_endpoint = [np.cos(np.radians(back_left_angle)), np.sin(np.radians(back_left_angle))]
-		front_right_endpoint = [np.cos(np.radians(front_right_angle)), np.sin(np.radians(front_right_angle))]
-		back_right_endpoint = [np.cos(np.radians(back_right_angle)), np.sin(np.radians(back_right_angle))]
-
-		# combine into a single array
-		endpoints = np.array([
-			front_left_endpoint, 
-			back_left_endpoint, 
-			front_right_endpoint, 
-			back_right_endpoint
-		])
-		endpoints *= 10 # move the endpoint out to 10 meters so the line is longer. 
-
-		# Now we will compute the line of best fit for each wall, and draw that as well.
-		# This function first calculates the line that goes through the data
-		# then it returns two points along this line for plotting. 
-		left_wall = line_of_best_fit(left_wall_points)
-		right_wall = line_of_best_fit(right_wall_points)
-		walls = np.stack([left_wall, right_wall])
-
-		# Now use the wall locations to create a waypoint
-		waypoint = hallway_waypoint(left_wall, right_wall, step=1.0)
-
-		# Create a path to the waypoint. In this case, its just a straight line
-		path = np.zeros((2,2))
-		path[0] = [0.0, 0.0] # start at the origin
-		path[1] = waypoint # end at the waypoint
+			# now create points that belong to each list
+			# This assigns the point to left_wall_points if it belongs to the left wall, otherwise assigns it to 0.0
+			left_wall_points = points[belongs_to_left_wall]
+			
+			# do the same thing for the right wall
+			right_wall_points = points[belongs_to_right_wall]
+			
+			# now gather any points that do not belong to either wall.
+			# Thats what this means: ~(belongs_to_left_wall | belongs_to_right_wall)
+			# ~ means "NOT", and | means "OR"
+			# so you can read this as:
+			# NOT belongs to left wall OR belongs to right wall
+			other_points = points[~(belongs_to_left_wall | belongs_to_right_wall)]
 
 
-		# send to renderer, using different colors for each wall
-		tcp_socket.send({
-			"points_red": other_points,
-			"points_blue": left_wall_points,
-			"points_green": right_wall_points,
-			"endpoints": endpoints,
-			"walls": walls,
-			"waypoint": waypoint,
-			"path": path,
-		})
-		
-		current_time = time.time()
-		if current_time - start_time > wait_time:
-			# 3. Start the navigator
-			nav = AutonomousNavigator(
-				rc_hardware,
-				path,
-				wheelbase=wheelbase,
-				lookahead=lookahead,
-				resolution=resolution,
-				esc_neutral_us=esc_neutral_us,
-				meters_per_sec_per_us=METERS_PER_SEC_PER_US
-			)
-			nav.run(target_pulse_us=esc_forward_us)
+			# We will also draw lines from the car (origin) at the specified angle,
+			# so that its easier to see whats happening
+			# Feel free to change the "angle" variable to get an idea of whats happening. 
+			front_left_endpoint = [np.cos(np.radians(front_left_angle)), np.sin(np.radians(front_left_angle))]
+			back_left_endpoint = [np.cos(np.radians(back_left_angle)), np.sin(np.radians(back_left_angle))]
+			front_right_endpoint = [np.cos(np.radians(front_right_angle)), np.sin(np.radians(front_right_angle))]
+			back_right_endpoint = [np.cos(np.radians(back_right_angle)), np.sin(np.radians(back_right_angle))]
+
+			# combine into a single array
+			endpoints = np.array([
+				front_left_endpoint, 
+				back_left_endpoint, 
+				front_right_endpoint, 
+				back_right_endpoint
+			])
+			endpoints *= 10 # move the endpoint out to 10 meters so the line is longer. 
+
+			# Now we will compute the line of best fit for each wall, and draw that as well.
+			# This function first calculates the line that goes through the data
+			# then it returns two points along this line for plotting. 
+			left_wall = line_of_best_fit(left_wall_points)
+			right_wall = line_of_best_fit(right_wall_points)
+			walls = np.stack([left_wall, right_wall])
+
+			# Now use the wall locations to create a waypoint
+			waypoint = hallway_waypoint(left_wall, right_wall, step=1.0)
+
+			# Create a path to the waypoint. In this case, its just a straight line
+			path = np.zeros((2,2))
+			path[0] = [0.0, 0.0] # start at the origin
+			path[1] = waypoint # end at the waypoint
+
+
+			# send to renderer, using different colors for each wall
+			tcp_socket.send({
+				"points_red": other_points,
+				"points_blue": left_wall_points,
+				"points_green": right_wall_points,
+				"endpoints": endpoints,
+				"walls": walls,
+				"waypoint": waypoint,
+				"path": path,
+			})
+			
+			current_time = time.time()
+			if current_time - start_time > wait_time:
+				# Compute the angle, assuming 0 degrees is forward
+				waypoint_angle = np.degrees(np.arctan2(waypoint[1], waypoint[0]))
+
+				# Convert this to be relative to the car center
+				desired_angle = rc_hardware.neutral_angle + waypoint_angle
+
+				# set the steering angle
+				rc_hardware.turn(desired_angle)
+
+				# go forward
+				rc_hardware.forward()
+			if current_time - start_time > kill_time:
+				break
+	finally:
+		rc_hardware.shutdown()

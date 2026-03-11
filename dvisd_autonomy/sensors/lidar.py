@@ -38,27 +38,31 @@ class LIDAR:
 		self.kill_lidar()
 
 	def get_data(self):
-		for scan in self.lidar.iter_scans():
-			min_angle, max_angle = np.inf, -np.inf
-			scan_data = np.zeros(360)
-			for (_, angle, distance_mm) in scan:
-				# get angle in degrees
-				scan_angle = min(359, int(angle % 360))
-				# print(scan_angle, distance_mm)
+		while 1:
+			try:
+				self.lidar.clean_input()
+				for scan in self.lidar.iter_scans():
+					min_angle, max_angle = np.inf, -np.inf
+					scan_data = np.zeros(360)
+					for (_, angle, distance_mm) in scan:
+						# get angle in degrees
+						scan_angle = min(359, int(angle % 360))
+						# print(scan_angle, distance_mm)
 
-				# convert millimeters to meters
-				distance_m = distance_mm / 1000.0
+						# convert millimeters to meters
+						distance_m = distance_mm / 1000.0
 
-				# save distance at that angle
-				scan_data[scan_angle] = distance_m
+						# save distance at that angle
+						scan_data[scan_angle] = distance_m
 
-				# record max and mins
-				min_angle = min(min_angle, scan_angle)
-				max_angle = max(max_angle, scan_angle)
+						# record max and mins
+						min_angle = min(min_angle, scan_angle)
+						max_angle = max(max_angle, scan_angle)
 
-			# print(min_angle, max_angle)
-			yield scan_data
-
+					# print(min_angle, max_angle)
+					yield scan_data
+			except RPLidarException as e:
+				continue
 if __name__ == "__main__":
 	# Test we can connect to lidar and print data
 	lidar = LIDAR()

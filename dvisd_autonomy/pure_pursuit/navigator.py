@@ -80,9 +80,7 @@ class AutonomousNavigator:
                 time.sleep(0.005)
 
         except KeyboardInterrupt:
-            print("\nManual override. Shutting down...")
-        finally:
-            self.car.shutdown()
+            print("\nManual override. Stopping...")
 
 """--- Usage Example ---
 
