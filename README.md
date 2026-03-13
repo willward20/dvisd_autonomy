@@ -56,3 +56,8 @@ python3 -m scripts.control_example
 | `straight()`              | Resets steering angle to center. Does not change throttle value.          |
 | `stop()`                  | Resets throttle to neutral. Does not change steering angle.               |
 | `shutdown()`              | Safely stops and deinitializes hardware.                                  |
+
+
+## Troubleshooting
+### Raspberry Pi won't stay on
+If the Raspberry Pi won't stay turned on (the red light will turn on and off), check the voltage level of the LiPo battery. It it's too low, the buck converter can't provide enough current to maintain 5V output for the Pi. Try swapping out the battery for one with more charge. 
