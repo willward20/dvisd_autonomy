@@ -115,6 +115,10 @@ if __name__ == "__main__":
 
 	###################################################
 
+	# Tune this if you need to. Don't make it too short, it wont have time to stop
+	# Fyi the car is 0.2 meters ish so you need at least that long. 
+	estop_distance = 1.0
+
 	# Connect to lidar
 	lidar = LIDAR()
 
@@ -124,8 +128,8 @@ if __name__ == "__main__":
 
 	# Connect to the motors
 	esc_neutral_us = 1580
-	esc_forward_us = 1670
-	assert esc_forward_us < 1700, "Dont go too fast."
+	esc_forward_us = 1670 # 66 is slow, 70 is fast
+	assert esc_forward_us < 1675, "Dont go too fast."
 	rc_hardware = Control(
 		freq_hz=100,
 		esc_neutral_us=esc_neutral_us,
@@ -137,7 +141,7 @@ if __name__ == "__main__":
 
 	# Set start time, and how long to run the program.
 	wait_time = 5.0 # seconds
-	kill_time = 15.0 # seconds
+	kill_time = 11.0 # seconds
 	start_time = time.time()
 
 	# fetch data in a loop
@@ -246,6 +250,21 @@ if __name__ == "__main__":
 
 					# go forward
 					rc_hardware.forward()
+
+					# Check how far forward to a wall. If its less than 0.1 meters, stop!
+					# Use 0-10 and 350-360 to represent forward
+					forward_points = np.concatenate([
+						points[:10],
+						points[350:],
+					], axis=0)
+					zeros = (forward_points[:, 0] == 0.0) & (forward_points[:, 1] == 0)
+					forward_points = forward_points[~zeros]
+					if forward_points.shape[0] != 0:
+						distance_to_front_wall = np.mean(forward_points[:, 0])
+						if distance_to_front_wall < estop_distance:
+							rc_hardware.shutdown()
+							print("Collision detected! Emergency STOP!")
+							break
 
 				# terminate the program after a certain amount of time for safety reasons. 
 				if current_time > kill_time:
