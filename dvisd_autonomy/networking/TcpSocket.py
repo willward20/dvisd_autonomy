@@ -39,7 +39,7 @@ class TcpSocketReceiver:
 		# This function checks if there is a message to receive, and if so, receives it. 
 		# Otherwise, it returns an empty dict.
 		try:
-			msg = socket.recv_pyobj(flags=zmq.NOBLOCK)
+			msg = self.socket.recv_pyobj(flags=zmq.NOBLOCK)
 		except zmq.error.Again:
 			msg = {}
 
