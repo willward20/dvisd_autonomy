@@ -30,6 +30,10 @@ The robot is powered by a 7.2 V battery (stored in the left chassis compartment)
 ### Motor Control
 The RPi controls the steering servo and ESC via a PCA9685 motor control board. Note that the PCA board recieves power from the ESC when plugged into Channel 2. Then, the board provides power the steering servo through Channel 1. 
 
+### Ultrasonic Sensor Circuit
+![power system](/images/ultrasonic_circuit.png)
+
+
 ## Driving the Cars
 1. Open `~/dvisd_autonomy/scripts/control_example` and change the config file to the current vehicle.
 2. Connect battery to ESC.
