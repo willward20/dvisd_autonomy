@@ -1,5 +1,5 @@
 from dvisd_autonomy.sensors.lidar import LIDAR
-from dvisd_autonomy.render.TcpSocket import TcpSocket
+from dvisd_autonomy.networking.TcpSocket import TcpSocketSender
 import numpy as np
 from tqdm import tqdm
 
@@ -9,24 +9,17 @@ import time
 import numpy as np
 
 import time
-#######################################################
-# Part 4: Find a waypoint!
-# In the previous script, we found the walls, defined as a line in XY space. 
-# Now, we will use our position from these walls, and define a waypoint one 
-# meter forward from our current position
-#######################################################
 
 
 def normalize(v):
+	# Normalize a vector. This means to make it have a length of 1, while keeping the same direction.
     n = np.linalg.norm(v)
     if n < 1e-8:
         return v
     return v / n
 
 def closest_point_on_line(p1, p2, point):
-	"""
-	Return closest point on line (p1,p2) to 'point'
-	"""
+	# Returns the closest point on the line defined by p1 and p2 to the given point.
 	d = p2 - p1
 	denom = np.dot(d,d)
 	if denom < 1e-5:
@@ -35,12 +28,7 @@ def closest_point_on_line(p1, p2, point):
 	return p1 + t * d
 
 def hallway_waypoint(wall1, wall2, step=1.0):
-    """
-    wall1, wall2: ((x1,y1),(x2,y2))
-    step: meters forward
-
-    returns waypoint (x,y)
-    """
+    # Given the walls, compute a waypoint that is "step" meters forward in the hallway.
 
     p1, p2 = np.array(wall1[0]), np.array(wall1[1])
     p3, p4 = np.array(wall2[0]), np.array(wall2[1])
@@ -74,6 +62,7 @@ def hallway_waypoint(wall1, wall2, step=1.0):
 
 
 def line_of_best_fit(points):
+	# Given points, finds the line that goes through most of the points
 
 	# Remove points close to 0,0
 	margin_of_error = 0.05 # 5 cm
@@ -115,25 +104,28 @@ def line_of_best_fit(points):
 
 
 if __name__ == "__main__":
+
+	##### Tune these parameters! ######################
+	# TODO !!!!
 	# How wide of a range of points do you want to use to predict the wall?
 	angle = 25 # degrees
-	### Tune the parameters yourself ###
-	esc_neutral_us = 1580
-	esc_forward_us = 1650
-	wheelbase = 0.4
-	lookahead = 0.1
-	resolution = 0.001
-	METERS_PER_SEC_PER_US = 0.015
-	####################################
+
+	# How far ahead to place the waypoint.
+	lookahead_distance = 1 # meters
+
+	###################################################
 
 	# Connect to lidar
 	lidar = LIDAR()
 
 	# Create server to send data to laptop
 	# TCP is the communication protocol that most of the internet uses. 
-	tcp_socket = TcpSocket()
+	tcp_socket = TcpSocketSender()
 
-	# 2. Initialize your specific hardware config
+	# Connect to the motors
+	esc_neutral_us = 1580
+	esc_forward_us = 1670
+	assert esc_forward_us < 1700, "Dont go too fast."
 	rc_hardware = Control(
 		freq_hz=100,
 		esc_neutral_us=esc_neutral_us,
@@ -143,11 +135,19 @@ if __name__ == "__main__":
 		steering_max=140
 	)
 
+	# Set start time, and how long to run the program.
+	wait_time = 5.0 # seconds
+	kill_time = 15.0 # seconds
+	start_time = time.time()
+
 	# fetch data in a loop
 	# Press CTRL+C to stop the program
-	wait_time = 5.0 # seconds
-	kill_time = 10.0 # seconds
-	start_time = time.time()
+	# Notes:
+	# 	Observe the try: statement below. It executes the following code. When this code terminates,
+	# 	or even if it crashes, it will run the code under "finally:" (lin 263)
+	# 	What does this code do? Why is it necessary? 
+	# Other notes:
+	# 	"with tqdm() as pbar:" Creates a progress bar to show what time it is. 
 	try:
 		with tqdm() as pbar:
 			for distances in lidar.get_data():
@@ -188,7 +188,7 @@ if __name__ == "__main__":
 
 				# We will also draw lines from the car (origin) at the specified angle,
 				# so that its easier to see whats happening
-				# Feel free to change the "angle" variable to get an idea of whats happening. 
+				# Feel free to change the "angle" variable (above) to get an idea of whats happening. 
 				front_left_endpoint = [np.cos(np.radians(front_left_angle)), np.sin(np.radians(front_left_angle))]
 				back_left_endpoint = [np.cos(np.radians(back_left_angle)), np.sin(np.radians(back_left_angle))]
 				front_right_endpoint = [np.cos(np.radians(front_right_angle)), np.sin(np.radians(front_right_angle))]
@@ -211,7 +211,7 @@ if __name__ == "__main__":
 				walls = np.stack([left_wall, right_wall])
 
 				# Now use the wall locations to create a waypoint
-				waypoint = hallway_waypoint(left_wall, right_wall, step=1.0)
+				waypoint = hallway_waypoint(left_wall, right_wall, step=lookahead_distance)
 
 				# Create a path to the waypoint. In this case, its just a straight line
 				path = np.zeros((2,2))
@@ -230,19 +230,24 @@ if __name__ == "__main__":
 					"path": path,
 				})
 				
+				# Update the amount of time the program has run. 
 				current_time = time.time() - start_time
+
+				# Once we are ready to drive, drive!
 				if current_time > wait_time:
-					# Compute the angle, assuming 0 degrees is forward
+					# Compute the angle to the waypoint, assuming 0 degrees is forward
 					waypoint_angle = np.degrees(np.arctan2(waypoint[1], waypoint[0]))
 
 					# Convert this to be relative to the car center
 					desired_angle = rc_hardware.neutral_angle + waypoint_angle
 
-					# set the steering angle
+					# set the steering angle to point directly at the waypoint
 					rc_hardware.turn(desired_angle)
 
 					# go forward
 					rc_hardware.forward()
+
+				# terminate the program after a certain amount of time for safety reasons. 
 				if current_time > kill_time:
 					break
 
@@ -254,6 +259,6 @@ if __name__ == "__main__":
 					pbar.set_description(f"{current_time:.2f}s: Driving")
 
 
-				
+	# Why is this code needed?
 	finally:
 		rc_hardware.shutdown()

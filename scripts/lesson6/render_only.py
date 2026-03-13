@@ -1,15 +1,71 @@
 from dvisd_autonomy.sensors.lidar import LIDAR
-from dvisd_autonomy.render.TcpSocket import TcpSocket
+from dvisd_autonomy.networking.TcpSocket import TcpSocketSender
 import numpy as np
 from tqdm import tqdm
 
 
 #######################################################
-# Part 3: Predict the walls!
-# In the previous script, we highlighted points that belong to each wall
-# Now we will compute a line of best fit, and draw the actual wall itself
-# we assume the wall is flat. Is this a good assumption?
+# Part 4: Find a waypoint!
+# In the previous script, we found the walls, defined as a line in XY space. 
+# Now, we will use our position from these walls, and define a waypoint one 
+# meter forward from our current position
 #######################################################
+
+
+def normalize(v):
+    n = np.linalg.norm(v)
+    if n < 1e-8:
+        return v
+    return v / n
+
+def closest_point_on_line(p1, p2, point):
+	"""
+	Return closest point on line (p1,p2) to 'point'
+	"""
+	d = p2 - p1
+	denom = np.dot(d,d)
+	if denom < 1e-5:
+		denom += 1
+	t = np.dot(point - p1, d) / denom
+	return p1 + t * d
+
+def hallway_waypoint(wall1, wall2, step=1.0):
+    """
+    wall1, wall2: ((x1,y1),(x2,y2))
+    step: meters forward
+
+    returns waypoint (x,y)
+    """
+
+    p1, p2 = np.array(wall1[0]), np.array(wall1[1])
+    p3, p4 = np.array(wall2[0]), np.array(wall2[1])
+
+    origin = np.array([0.0, 0.0])
+
+    # closest points to robot
+    c1 = closest_point_on_line(p1, p2, origin)
+    c2 = closest_point_on_line(p3, p4, origin)
+
+    # center of hallway near robot
+    center = (c1 + c2) / 2.0
+
+    # wall directions
+    d1 = normalize(p2 - p1)
+    d2 = normalize(p4 - p3)
+
+    # make them roughly same orientation
+    if np.dot(d1, d2) < 0:
+        d2 = -d2
+
+    hallway_dir = normalize(d1 + d2)
+
+	# force direction to point toward +x
+    if hallway_dir[0] < 0:
+        hallway_dir = -hallway_dir
+
+    waypoint = center + hallway_dir * step
+
+    return waypoint
 
 
 def line_of_best_fit(points):
@@ -62,7 +118,7 @@ if __name__ == "__main__":
 
 	# Create server to send data to laptop
 	# TCP is the communication protocol that most of the internet uses. 
-	tcp_socket = TcpSocket()
+	tcp_socket = TcpSocketSender()
 
 	# fetch data in a loop
 	# Press CTRL+C to stop the program
@@ -126,6 +182,14 @@ if __name__ == "__main__":
 		right_wall = line_of_best_fit(right_wall_points)
 		walls = np.stack([left_wall, right_wall])
 
+		# Now use the wall locations to create a waypoint
+		waypoint = hallway_waypoint(left_wall, right_wall, step=1.0)
+
+		# Create a path to the waypoint. In this case, its just a straight line
+		path = np.zeros((2,2))
+		path[0] = [0.0, 0.0] # start at the origin
+		path[1] = waypoint # end at the waypoint
+
 		# send to renderer, using different colors for each wall
 		tcp_socket.send({
 			"points_red": other_points,
@@ -133,5 +197,7 @@ if __name__ == "__main__":
 			"points_green": right_wall_points,
 			"endpoints": endpoints,
 			"walls": walls,
+			"waypoint": waypoint,
+			"path": path,
 		})
 		
