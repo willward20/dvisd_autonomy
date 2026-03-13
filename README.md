@@ -20,7 +20,15 @@ pip3 install PyYAML
 ```
 
 ## Electronic Wiring
-Each subfolder in `dvisd_autonomy` (e.g., `dvisd_autonomy/control`) provides a diagram for wiring electronic devices. Refer to these when building the cars.
+![wiring](/images/CardinalWiring.png)
+
+### Power System
+![power system](/images/power_system.png)
+
+The robot is powered by a 7.2 V battery (stored in the left chassis compartment). Using a splitter, the battery powers the ESC and a buck converter (stored in the right compartment) in parallel. The buck convterer (tuned to 5V using its potentiometer) powers the RPi via its GPIO pins (5V power and GND).
+
+### Motor Control
+The RPi controls the steering servo and ESC via a PCA9685 motor control board. Note that the PCA board recieves power from the ESC when plugged into Channel 2. Then, the board provides power the steering servo through Channel 1. 
 
 ## Driving the Cars
 1. Open `~/dvisd_autonomy/scripts/control_example` and change the config file to the current vehicle.
