@@ -22,6 +22,8 @@ class Control:
     ):
         """Initialize the control interface and set motors to neutral."""
 
+        print("Initializing motors...")
+
         # Store config
         self.esc_neutral_us = esc_neutral_us
         self.esc_forward_us = esc_forward_us
@@ -47,7 +49,6 @@ class Control:
     
     def __del__(self):
         """Shuts down the motors on cleanup."""
-        print("Resetting motors to neutral...")
         self.shutdown()
 
     def _us_to_counts(self, pulse_us: int) -> int:
