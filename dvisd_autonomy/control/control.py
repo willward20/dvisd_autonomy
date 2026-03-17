@@ -47,7 +47,6 @@ class Control:
     
     def __del__(self):
         """Shuts down the motors on cleanup."""
-        print("Resetting motors to neutral...")
         self.shutdown()
 
     def _us_to_counts(self, pulse_us: int) -> int:
