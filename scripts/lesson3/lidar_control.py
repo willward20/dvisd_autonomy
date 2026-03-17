@@ -19,12 +19,12 @@ def main(config_path):
     print("Driving forward until wall detected...")
     control.forward(1650)
 
-    for scan_data in lidar.get_scans():
+    for scan_data, _ in lidar.get_scans():
         # Front wedge: 0–20 and 340–360
-        front_angles = np.concatenate((scan_data[:20], scan_data[340:]))
+        front_wedge = np.concatenate((scan_data[:20], scan_data[340:]))
 
         # Filter invalid readings (0.0 means no return)
-        valid_distances = front_angles[front_angles > 0]
+        valid_distances = front_wedge[front_wedge > 0]
 
         if valid_distances.size == 0:
             continue
