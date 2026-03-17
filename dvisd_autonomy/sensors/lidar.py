@@ -1,74 +1,91 @@
 import numpy as np
-import time
 from rplidar import RPLidar, RPLidarException
 
-class LIDAR:
 
-	def __init__(self):
-		print("Initializing Lidar...")
-		retry = 0
-		while retry < 10:
-			try:
-				self.lidar = RPLidar("/dev/ttyUSB0")
-				self.info = self.lidar.get_info()
-				print(self.info)
-				break
-			except RPLidarException as e:
-				if "Incorrect descriptor" in e.args[0]:
-					print(f"LIDAR busy. Restarting... ({retry}):", e)
-					self.kill_lidar()
-					retry += 1
-				elif "could not open port /dev/ttyUSB0" in e.args[0]:
-					print(f"ERROR: Could not open port /dev/ttyUSB0. Please make sure the lidar is plugged in.")
-					exit(1)
-				else:
-					raise e
-		if retry == 10:
-			raise Exception("Lidar could not be initialized.")
-		print("Lidar Initialized!\n")
-		self.scan_data = np.zeros(360)
+class Lidar:
+    PORT = "/dev/ttyUSB0"
+    MAX_RETRIES = 10
+    NUM_ANGLES = 360
+
+    def __init__(self, port: str = PORT):
+        self.port = port
+        self.lidar = None
+        self._connect()
+        self.scan_data = np.zeros(self.NUM_ANGLES)
+
+    def _connect(self):
+        print("Initializing Lidar...")
+
+        for attempt in range(self.MAX_RETRIES):
+            try:
+                self.lidar = RPLidar(self.port)
+                info = self.lidar.get_info()
+                print(info)
+                print("Lidar Initialized!\n")
+                return
+
+            except RPLidarException as e:
+                msg = str(e)
+
+                if "Incorrect descriptor" in msg:
+                    print(f"LIDAR busy. Restarting... ({attempt})")
+                    self._restart()
+
+                elif "could not open port" in msg:
+                    raise RuntimeError(
+                        f"Could not open port {self.port}. Is the lidar plugged in?"
+                    ) from e
+
+                else:
+                    raise
+
+        raise RuntimeError("Lidar could not be initialized after retries.")
+
+    def _restart(self):
+        if self.lidar is not None:
+            try:
+                self.lidar.stop()
+                self.lidar.disconnect()
+            except Exception:
+                pass
+            finally:
+                self.lidar = None
+
+    def close(self):
+        """Explicit cleanup (preferred over __del__)."""
+        self._restart()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        self.close()
+
+    def get_scans(self):
+        """Generator yielding 360-degree scans in meters."""
+        while True:
+            try:
+                self.lidar.clean_input()
+
+                for scan in self.lidar.iter_scans():
+                    scan_data = np.zeros(self.NUM_ANGLES)
+
+                    for _, angle, distance_mm in scan:
+                        idx = min(self.NUM_ANGLES - 1, int(angle % 360))
+                        scan_data[idx] = distance_mm / 1000.0  # mm → m
+
+                    yield scan_data
+
+            except RPLidarException:
+                # Recover and continue
+                self._restart()
+                self._connect()
 
 
-	def kill_lidar(self):
-		if hasattr(self, "lidar") and self.lidar is not None:
-			self.lidar.stop()
-			self.lidar.disconnect()
-
-	def __del__(self):
-		self.kill_lidar()
-
-	def get_data(self):
-		while 1:
-			try:
-				self.lidar.clean_input()
-				for scan in self.lidar.iter_scans():
-					min_angle, max_angle = np.inf, -np.inf
-					scan_data = np.zeros(360)
-					for (_, angle, distance_mm) in scan:
-						# get angle in degrees
-						scan_angle = min(359, int(angle % 360))
-						# print(scan_angle, distance_mm)
-
-						# convert millimeters to meters
-						distance_m = distance_mm / 1000.0
-
-						# save distance at that angle
-						scan_data[scan_angle] = distance_m
-
-						# record max and mins
-						min_angle = min(min_angle, scan_angle)
-						max_angle = max(max_angle, scan_angle)
-
-					# print(min_angle, max_angle)
-					yield scan_data
-			except RPLidarException as e:
-				continue
 if __name__ == "__main__":
-	# Test we can connect to lidar and print data
-	lidar = LIDAR()
-	i = 0
-	for data in lidar.get_data():
-		i += 1
-		print(data)
-		if i == 3:
-			exit()
+    # Example usage
+    with Lidar() as lidar:
+        for i, scan in enumerate(lidar.get_scans()):
+            print(scan)
+            if i >= 2:
+                break

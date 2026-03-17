@@ -22,6 +22,8 @@ class Control:
     ):
         """Initialize the control interface and set motors to neutral."""
 
+        print("Initializing motors...")
+
         # Store config
         self.esc_neutral_us = esc_neutral_us
         self.esc_forward_us = esc_forward_us

@@ -1,58 +1,43 @@
 import numpy as np
-import time
 from pathlib import Path
-from rplidar import RPLidar
 from dvisd_autonomy.control.control import Control
-from dvisd_autonomy.control.utils import load_yaml
-from dvisd_autonomy.sensors.lidar import LIDAR
+from dvisd_autonomy.utils import load_yaml
+from dvisd_autonomy.sensors.lidar import Lidar
+
 
 def main(config_path):
-    
-    # Load configuration for the robot
+    # Load configuration
     config = load_yaml(config_path)
 
-    # Initialize the motors
-    print("Initializing motors...")
+    # Initialize hardware
     control = Control(**config["control"])
+    lidar = Lidar()
 
-    # Initialize Lidar
-    print("Initializing Lidar...")
-    lidar = LIDAR()
-    
-    # Lidar Setup
-    STOP_DISTANCE_MM = 1000  # 50cm = 500mm
-    scan_data = np.zeros(360)
+    # Lidar setup (now returns meters)
+    STOP_DISTANCE_M = 1.0  # 1 meter
 
-    # Start driving forward
     print("Driving forward until wall detected...")
     control.forward(1650)
 
-    # Iterate through Lidar scans
-    for scan in lidar.get_scans():
-        # Update the scan_data buffer with new points
-        for (_, angle, distance) in scan:
-            scan_angle = min(359, int(angle % 360))
-            scan_data[scan_angle] = distance
-
-        # Extract the "Blue" points (Front facing wedge: 0-20 and 340-360)
-        # We combine the left slice (0-20) and the right slice (340-360)
+    for scan_data in lidar.get_scans():
+        # Front wedge: 0–20 and 340–360
         front_angles = np.concatenate((scan_data[:20], scan_data[340:]))
 
-        # Filter out 0.0 values (invalid or out of range measurements)
+        # Filter invalid readings (0.0 means no return)
         valid_distances = front_angles[front_angles > 0]
 
-        if len(valid_distances) > 0:
-            # Compute the 10th percentile distance
-            # This finds the value below which 10% of the observations fall
-            dist_10th = np.percentile(valid_distances, 10)
-            
-            print(f"Front 10th Percentile: {dist_10th:.1f} mm")
+        if valid_distances.size == 0:
+            continue
 
-            # Check if we are close to the wall (100cm / 1000mm)
-            if dist_10th <= STOP_DISTANCE_MM:
-                print("Wall detected. Stopping.")
-                control.stop()
-                break
+        # Robust distance estimate
+        dist_10th = np.percentile(valid_distances, 10)
+
+        print(f"Front 10th Percentile: {dist_10th:.2f} m")
+
+        if dist_10th <= STOP_DISTANCE_M:
+            print("Wall detected. Stopping.")
+            control.stop()
+            break
 
 
 if __name__ == "__main__":
