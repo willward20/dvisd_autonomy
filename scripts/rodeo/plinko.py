@@ -6,6 +6,21 @@ from dvisd_autonomy.utils import load_yaml
 from dvisd_autonomy.sensors.lidar import Lidar
 
 
+SERVO_CENTER = 100
+SERVO_MIN = 50
+SERVO_MAX = 140
+
+MAX_STEER_RAD = 0.5  # same as your current clip (~28.6 deg)
+
+def steering_to_servo(delta):
+    """
+    Convert steering angle (radians) → servo command
+    """
+    normalized = np.clip(delta / MAX_STEER_RAD, -1.0, 1.0)
+    cmd = SERVO_CENTER + normalized * (SERVO_MAX - SERVO_CENTER)
+    return np.clip(cmd, SERVO_MIN, SERVO_MAX)
+
+
 # def best_direction(ranges, angles):
 #     """
 #     Compute a desired direction vector given lidar ranges.
@@ -56,7 +71,7 @@ def best_direction(ranges, angles, plot=True):
     if plot:
         _plot_lidar_vectors(ranges, angles, vectors, v)
 
-    return np.degrees(angle)
+    return angle
 
 
 def _plot_lidar_vectors(ranges, angles, vectors, result_vector):
@@ -113,9 +128,16 @@ def main(config_path):
         wedge = np.concatenate((scan_data[:45], scan_data[315:]))
         wedge_angles = np.concatenate((angles[:45], angles[315:] - 2*np.pi))
         # print("wedge angles: ", wedge_angles)
-        desired_angle = control.neutral_angle + best_direction(wedge, wedge_angles)
-        print("Desired Angle: ", desired_angle)
-        control.turn(desired_angle)
+        desired_angle = best_direction(wedge, wedge_angles)
+
+        # Controller outputs desired steering angle
+        delta_desired = np.clip(desired_angle, -MAX_STEER_RAD, MAX_STEER_RAD)
+
+        # Convert to real robot command
+        servo_cmd = steering_to_servo(delta_desired)
+        print("servo_cmd: ", servo_cmd)
+
+        control.turn(servo_cmd)
         time.sleep(0.1)
 
         return
