@@ -65,8 +65,6 @@ class Lidar:
         """Generator yielding (distances, angles) for a 360-degree scan."""
         while True:
             try:
-                self.lidar.clean_input()
-
                 for scan in self.lidar.iter_scans():
                     scan_data = np.zeros(self.NUM_ANGLES)
                     angles = np.linspace(0, 2*np.pi, self.NUM_ANGLES, endpoint=False)
