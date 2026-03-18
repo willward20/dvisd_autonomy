@@ -17,6 +17,7 @@ source ~/myvenv/bin/activate
 pip3 install adafruit-circuitpython-servokit
 pip3 install RPi.GPIO
 pip3 install PyYAML
+pip install tqdm pyzmq
 ```
 
 ## Electronic Wiring
