@@ -18,6 +18,7 @@ pip3 install adafruit-circuitpython-servokit
 pip3 install RPi.GPIO
 pip3 install PyYAML
 pip install matplotlib
+pip install tqdm pyzmq
 ```
 
 ## Electronic Wiring

@@ -1,8 +1,8 @@
 import numpy as np
 from pathlib import Path
-from dvisd_autonomy.control.control import Control
+from dvisd_autonomy.hardware.control import Control
 from dvisd_autonomy.utils import load_yaml
-from dvisd_autonomy.sensors.lidar import Lidar
+from dvisd_autonomy.hardware.lidar import Lidar
 
 
 def main(config_path):
