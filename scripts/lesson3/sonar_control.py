@@ -1,6 +1,6 @@
-from dvisd_autonomy.control.control import Control
+from dvisd_autonomy.hardware.control import Control
 from dvisd_autonomy.utils import load_yaml
-from dvisd_autonomy.sensors.sonar import Sonar
+from dvisd_autonomy.hardware.sonar import Sonar
 from pathlib import Path
 import time
 

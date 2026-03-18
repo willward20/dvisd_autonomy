@@ -1,5 +1,5 @@
 import time
-from dvisd_autonomy.sensors.ir import IR
+from dvisd_autonomy.hardware.ir import IR
 
 def main():
     

@@ -1,5 +1,5 @@
 import numpy as np
-from dvisd_autonomy.sensors.lidar import Lidar
+from dvisd_autonomy.hardware.lidar import Lidar
 from dvisd_autonomy.networking.tcp_socket import TcpSocketSender
 
 
