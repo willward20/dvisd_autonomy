@@ -8,7 +8,7 @@ MAX_RANGE = 5.0
 N_LIDAR = 180
 LIDAR_ANGLES = np.linspace(-np.pi/4, np.pi/4, int(N_LIDAR/4))
 
-SPEED = 1.0
+SPEED = 0.5
 
 SERVO_CENTER = 100
 SERVO_MIN = 50
@@ -107,7 +107,7 @@ def simulate_lidar_fast(state, obstacles, max_range=MAX_RANGE, n_points=200):
 
 def best_direction(ranges):
 
-    v = 2.0 * np.array([1.0, 0.0])
+    v = 0.5 * np.array([1.0, 0.0])
 
     for r, theta in zip(ranges, LIDAR_ANGLES):
 
@@ -116,16 +116,74 @@ def best_direction(ranges):
 
         r = max(r, 0.2)
 
-        w = 1.0 / (r*r)
+        x = np.cos(theta)
+        y = np.sin(theta)
 
-        vx = -w * np.cos(theta)
-        vy = -w * np.sin(theta)
+        w = 1.0 / (r*r)
+     
+        if y >= 0:
+            vx = w * y
+            vy = - w * x
+        else:
+            vx = - w * y
+            vy = w * x
+
 
         v += np.array([vx, vy])
 
     angle = np.arctan2(v[1], v[0])
 
     return angle
+
+
+
+
+def find_best_gap(ranges, min_dist=1.0):
+    """
+    Find largest contiguous region where range > min_dist
+    """
+    valid = ranges > min_dist
+
+    gaps = []
+    start = None
+
+    for i, v in enumerate(valid):
+        if v and start is None:
+            start = i
+        elif not v and start is not None:
+            gaps.append((start, i))
+            start = None
+
+    if start is not None:
+        gaps.append((start, len(ranges)))
+
+    if not gaps:
+        return None
+
+    return max(gaps, key=lambda g: g[1] - g[0])
+
+
+def select_goal_point(ranges, angles, gap):
+    """
+    Pick midpoint of gap as goal
+    """
+    start, end = gap
+    mid = (start + end) // 2
+
+    r = ranges[mid]
+    theta = angles[mid]
+
+    x = r * np.cos(theta)
+    y = r * np.sin(theta)
+
+    return np.array([x, y])
+
+
+def pure_pursuit_angle(goal_point):
+    """
+    Steering angle toward goal point (robot frame)
+    """
+    return np.arctan2(goal_point[1], goal_point[0])
 
 
 def bicycle_step(state, delta):
@@ -152,7 +210,20 @@ while (np.sqrt(state[0]**2 + state[1]**2) < 10.0):
 
     ranges = simulate_lidar_fast(state, obstacles)
 
-    desired_angle = best_direction(ranges)
+
+    # ----- This one uses force vector field -----
+    # desired_angle = best_direction(ranges)
+    # --------------------------------------------
+
+    # ---- This one uses largest gap pursuit -----
+    gap = find_best_gap(ranges)
+
+    if gap is not None:
+        goal = select_goal_point(ranges, LIDAR_ANGLES, gap)
+        desired_angle = pure_pursuit_angle(goal)
+    else:
+        desired_angle = 0.0  # fallback
+    # --------------------------------------------
 
     # Controller outputs desired steering angle
     delta_desired = np.clip(desired_angle, -MAX_STEER_RAD, MAX_STEER_RAD)
