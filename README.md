@@ -1,5 +1,7 @@
 # DVISD Autonomy
 
+Development note: Do not install any vs code extensions into the rasberry pis. They are not fast enough to handle this. If the pi is slow, go to extensions and uninstall all.
+
 ## Installation
 Before installing this package, ensure that the Raspberry Pi is properly configured. Follow the instructions in `docs/rpi_setup.md`.
 

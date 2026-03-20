@@ -111,7 +111,7 @@ if __name__ == "__main__":
 	angle = 25 # degrees
 
 	# How far ahead to place the waypoint.
-	lookahead_distance = 1 # meters
+	lookahead_distance = 1.0 # meters
 
 	###################################################
 
@@ -128,7 +128,7 @@ if __name__ == "__main__":
 
 	# Connect to the motors
 	esc_neutral_us = 1580
-	esc_forward_us = 1670 # 66 is slow, 70 is fast
+	esc_forward_us = 1660 # 66 is slow, 70 is fast
 	assert esc_forward_us < 1675, "Dont go too fast."
 	rc_hardware = Control(
 		freq_hz=100,

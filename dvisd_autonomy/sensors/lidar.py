@@ -27,6 +27,7 @@ class LIDAR:
 			raise Exception("Lidar could not be initialized.")
 		print("Lidar Initialized!\n")
 		self.scan_data = np.zeros(360)
+		self.lidar.clean_input()
 
 
 	def kill_lidar(self):
