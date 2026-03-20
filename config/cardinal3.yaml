@@ -1,0 +1,21 @@
+# Configuration for Cardinal 2
+
+control:
+
+  # servokit signal frequency
+  freq_hz: 100
+
+  # pulse width range
+  esc_neutral_us: 1580
+  esc_forward_us: 1645
+
+  # steering angles
+  neutral_angle: 100
+  steering_min: 50
+  steering_max: 140
+
+  # pure pursuit
+  wheelbase: 0.6
+  lookahead: 0.1
+  resolution: 0.001
+  meters_per_sec_per_us: 0.006
