@@ -68,7 +68,7 @@ class LidarStreamer:
 
     def stream(self):
         """Main loop"""
-        for distances in self.lidar.get_scans():
+        for distances in self.lidar.get_data():
             points = self.process_scan(distances)
 
             self.socket.send({
