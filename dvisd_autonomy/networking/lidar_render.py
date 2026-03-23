@@ -37,6 +37,18 @@ class LidarTopDownVisualizer:
         # draw origin (car position)
         self.ax.plot(0, 0, 'ko')  # black dot at origin
 
+        self.heading = self.ax.quiver(
+            0, 0,   # origin
+            0.5, 0,   # direction (x=1, y=0)
+            angles='xy',
+            scale_units='xy',
+            scale=0.75,
+            color='r',
+            width=0.0075
+        )
+
+        plt.grid()
+
         plt.show()
 
     def update_points(self, points, scatter):
