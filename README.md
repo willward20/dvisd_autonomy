@@ -62,3 +62,6 @@ python3 -m scripts.control_example
 ## Troubleshooting
 ### Raspberry Pi won't stay on
 If the Raspberry Pi won't stay turned on (the red light will turn on and off), check the voltage level of the LiPo battery. It it's too low, the buck converter can't provide enough current to maintain 5V output for the Pi. Try swapping out the battery for one with more charge. 
+
+## Wheels are jittering in tele op
+If the wheels are jittering, ie turning left and right rapidly while driving with a controller, turn off the assisted control by turning the "multi-function" dial all the way to the left.
